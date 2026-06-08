@@ -1,0 +1,36 @@
+---
+site_name: bot_mail
+site_url: https://bot_mail.readthedocs.io/
+site_author: Matthew Martin <matthewdeanmartin@gmail.com>
+site_description: A shell app for bot mail
+repo_url: https://github.com/matthewdeanmartin/bot_mail
+theme:
+  name: readthedocs
+  features: [navigation.footer]
+edit_uri: edit/main/docs/
+markdown_extensions:
+  - attr_list
+  - codehilite
+  - toc:
+      permalink: true
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage:
+      - Quick Start: usage/quickstart.md
+  - Contributing: extending/CONTRIBUTING.md
+  - Changelog: changelog.md
+validation:
+  nav:
+    omitted_files: warn
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
