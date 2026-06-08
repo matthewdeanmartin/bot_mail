@@ -49,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _config_from_args(args: argparse.Namespace) -> Config:
+def config_from_args(args: argparse.Namespace) -> Config:
     """Build a config from environment, then apply CLI overrides."""
     config = Config.from_env()
     if args.backend:
@@ -75,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
         level=logging.DEBUG if args.verbose else logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    config = _config_from_args(args)
+    config = config_from_args(args)
     command = args.command or "ui"
 
     if command == "send":
@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if command == "serve":
-        return _serve(config)
+        return serve(config)
 
     # Default: UI. Imported lazily so headless environments can still use serve/send.
     from bot_mail.ui.tkinter_app import run_ui
@@ -94,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _serve(config: Config) -> int:
+def serve(config: Config) -> int:
     """Run the server and bot headless until interrupted."""
     app = App(config)
     app.start()

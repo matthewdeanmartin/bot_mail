@@ -13,7 +13,7 @@ from bot_mail.config import Config
 from bot_mail.domain.models import ChatMessage, Message, Role
 from bot_mail.llm.base import ChatBackend
 
-_SUMMARY_INSTRUCTION = (
+SUMMARY_INSTRUCTION = (
     "Summarize the following conversation so it can be used as durable context "
     "for future replies. Capture key facts, decisions, and open questions in a "
     "few sentences. Do not add commentary."
@@ -61,7 +61,7 @@ def summarize_conversation(
     ]
     transcript = "\n".join(transcript_lines)
     prompt = [
-        ChatMessage(role="system", content=_SUMMARY_INSTRUCTION),
+        ChatMessage(role="system", content=SUMMARY_INSTRUCTION),
         ChatMessage(role="user", content=transcript),
     ]
     return backend.generate(prompt, model=config.ollama_model).strip()

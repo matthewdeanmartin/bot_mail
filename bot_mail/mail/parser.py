@@ -17,11 +17,11 @@ from email.utils import make_msgid
 from bot_mail.domain.threading import InboundHeaders, parse_references
 
 # Lines like "On <date>, <someone> wrote:" introduce a quoted reply.
-_REPLY_INTRO = re.compile(r"^On .+ wrote:\s*$", re.IGNORECASE)
+REPLY_INTRO = re.compile(r"^On .+ wrote:\s*$", re.IGNORECASE)
 # Outlook-style separator.
-_ORIGINAL_MSG = re.compile(r"^-+\s*Original Message\s*-+\s*$", re.IGNORECASE)
+ORIGINAL_MSG = re.compile(r"^-+\s*Original Message\s*-+\s*$", re.IGNORECASE)
 # Signature delimiter per convention: a line that is exactly "-- ".
-_SIG_DELIM = re.compile(r"^-- $")
+SIG_DELIM = re.compile(r"^-- $")
 
 
 @dataclass
@@ -46,7 +46,7 @@ def parse_message(raw: bytes) -> ParsedMessage:
     email_msg = message_from_bytes(raw)
 
     message_id = (email_msg.get("Message-ID") or make_msgid(domain="localhost")).strip()
-    in_reply_to = _clean_header(email_msg.get("In-Reply-To"))
+    in_reply_to = clean_header(email_msg.get("In-Reply-To"))
     references = parse_references(email_msg.get("References"))
     subject = (email_msg.get("Subject") or "").strip()
     from_addr = (email_msg.get("From") or "").strip()
@@ -69,7 +69,7 @@ def parse_message(raw: bytes) -> ParsedMessage:
     )
 
 
-def _clean_header(value: str | None) -> str | None:
+def clean_header(value: str | None) -> str | None:
     """Trim a header value, returning ``None`` for empty/missing headers."""
     if not value:
         return None
@@ -89,21 +89,21 @@ def extract_plain_text(email_msg: EmailMessage) -> str:
     if email_msg.is_multipart():
         # Prefer the first text/plain part; ignore attachments and html.
         for part in email_msg.walk():
-            if part.get_content_type() == "text/plain" and not _is_attachment(part):
-                return _decode_part(part)
+            if part.get_content_type() == "text/plain" and not is_attachment(part):
+                return decode_part(part)
         return ""
     if email_msg.get_content_type() == "text/plain":
-        return _decode_part(email_msg)
+        return decode_part(email_msg)
     return ""
 
 
-def _is_attachment(part: EmailMessage) -> bool:
+def is_attachment(part: EmailMessage) -> bool:
     """Return True if a MIME part is an attachment."""
     disposition = part.get("Content-Disposition", "")
     return "attachment" in disposition.lower()
 
 
-def _decode_part(part: EmailMessage) -> str:
+def decode_part(part: EmailMessage) -> str:
     """Decode a MIME part's payload to text using its declared charset."""
     payload = part.get_payload(decode=True)
     if not isinstance(payload, bytes):
@@ -128,9 +128,9 @@ def normalize_body(text: str) -> str:
     lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     kept: list[str] = []
     for line in lines:
-        if _REPLY_INTRO.match(line) or _ORIGINAL_MSG.match(line):
+        if REPLY_INTRO.match(line) or ORIGINAL_MSG.match(line):
             break
-        if _SIG_DELIM.match(line):
+        if SIG_DELIM.match(line):
             break
         if line.startswith(">"):
             # A quoted line; everything from here is generally history.

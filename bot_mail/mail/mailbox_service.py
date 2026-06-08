@@ -31,7 +31,7 @@ class MailboxService:
 
     def __init__(self, db: Database, config: Config) -> None:
         """Wire up repositories from the database handle."""
-        self._config = config
+        self.config = config
         self.conversations = ConversationRepository(db)
         self.messages = MessageRepository(db)
         self.jobs = JobRepository(db)
@@ -70,8 +70,8 @@ class MailboxService:
             message_id_header=parsed.headers.message_id,
             in_reply_to=parsed.headers.in_reply_to,
             references_header=" ".join(parsed.headers.references) or None,
-            from_addr=parsed.from_addr or self._config.user_address,
-            to_addr=parsed.to_addr or self._config.bot_address,
+            from_addr=parsed.from_addr or self.config.user_address,
+            to_addr=parsed.to_addr or self.config.bot_address,
             subject=parsed.headers.subject or conversation.subject,
             body_text=parsed.body_text,
             role=Role.USER,
@@ -119,8 +119,8 @@ class MailboxService:
                 references = build_references(parent)
 
         email_msg = compose_message(
-            from_addr=self._config.user_address,
-            to_addr=self._config.bot_address,
+            from_addr=self.config.user_address,
+            to_addr=self.config.bot_address,
             subject=msg_subject,
             body_text=body_text,
             in_reply_to=in_reply_to,
@@ -145,8 +145,8 @@ class MailboxService:
         references = build_references(trigger)
 
         email_msg = compose_message(
-            from_addr=self._config.bot_address,
-            to_addr=trigger.from_addr or self._config.user_address,
+            from_addr=self.config.bot_address,
+            to_addr=trigger.from_addr or self.config.user_address,
             subject=subject,
             body_text=body_text,
             in_reply_to=trigger.message_id_header,

@@ -7,7 +7,7 @@ from email.message import EmailMessage
 from bot_mail.mail.parser import normalize_body, parse_message
 
 
-def _raw(body: str, subject: str = "Hi", **headers: str) -> bytes:
+def raw(body: str, subject: str = "Hi", **headers: str) -> bytes:
     msg = EmailMessage()
     msg["From"] = "user@localhost"
     msg["To"] = "chat@localhost"
@@ -20,7 +20,7 @@ def _raw(body: str, subject: str = "Hi", **headers: str) -> bytes:
 
 
 def test_parse_plain_text() -> None:
-    parsed = parse_message(_raw("Hello world"))
+    parsed = parse_message(raw("Hello world"))
     assert parsed.body_text == "Hello world"
     assert parsed.from_addr == "user@localhost"
     assert parsed.to_addr == "chat@localhost"
@@ -29,7 +29,7 @@ def test_parse_plain_text() -> None:
 
 
 def test_parse_threading_headers() -> None:
-    parsed = parse_message(_raw("reply", In_Reply_To="<p@localhost>", References="<a@localhost> <b@localhost>"))
+    parsed = parse_message(raw("reply", In_Reply_To="<p@localhost>", References="<a@localhost> <b@localhost>"))
     assert parsed.headers.in_reply_to == "<p@localhost>"
     assert parsed.headers.references == ["<a@localhost>", "<b@localhost>"]
 

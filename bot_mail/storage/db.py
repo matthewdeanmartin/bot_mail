@@ -26,7 +26,7 @@ class Database:
                 accepted for tests.
         """
         self.path = path
-        self._lock = threading.RLock()
+        self.conn_lock = threading.RLock()
         if path != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(
@@ -37,21 +37,21 @@ class Database:
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.execute("PRAGMA journal_mode = WAL")
-        self._init_schema()
+        self.init_schema()
 
-    def _init_schema(self) -> None:
+    def init_schema(self) -> None:
         """Create tables and indexes if they do not exist."""
         sql = resources.files("bot_mail.storage").joinpath("schema.sql").read_text(encoding="utf-8")
-        with self._lock:
+        with self.conn_lock:
             self.conn.executescript(sql)
             self.conn.commit()
 
     @property
     def lock(self) -> threading.RLock:
         """Return the connection lock for use by repositories."""
-        return self._lock
+        return self.conn_lock
 
     def close(self) -> None:
         """Close the underlying connection."""
-        with self._lock:
+        with self.conn_lock:
             self.conn.close()

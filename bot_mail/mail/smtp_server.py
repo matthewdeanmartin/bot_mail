@@ -21,7 +21,7 @@ from bot_mail.mail.mailbox_service import MailboxService
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
+LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
 
 
 class MailboxHandler:
@@ -29,9 +29,9 @@ class MailboxHandler:
 
     def __init__(self, mailbox: MailboxService, config: Config) -> None:
         """Store the mailbox service and config."""
-        self._mailbox = mailbox
-        self._config = config
-        self._allowed = {a.lower() for a in config.allowed_addresses}
+        self.mailbox = mailbox
+        self.config = config
+        self.allowed = {a.lower() for a in config.allowed_addresses}
 
     async def handle_RCPT(
         self,
@@ -42,7 +42,7 @@ class MailboxHandler:
         rcpt_options: list[str],
     ) -> str:
         """Accept the recipient only if it is a known local address."""
-        if address.lower() not in self._allowed:
+        if address.lower() not in self.allowed:
             logger.warning("rejecting recipient %s", address)
             return "550 not a local mailbox"
         envelope.rcpt_tos.append(address)
@@ -56,14 +56,14 @@ class MailboxHandler:
     ) -> str:
         """Store the received message via the mailbox service."""
         peer = session.peer[0] if session.peer else ""
-        if peer and peer not in _LOCAL_HOSTS:
+        if peer and peer not in LOCAL_HOSTS:
             logger.warning("rejecting non-local peer %s", peer)
             return "550 local connections only"
 
         content = envelope.content
         raw = content if isinstance(content, bytes) else str(content).encode("utf-8")
         try:
-            message = self._mailbox.ingest_raw(raw)
+            message = self.mailbox.ingest_raw(raw)
             logger.info("stored message %s in conversation %s", message.id, message.conversation_id)
         except Exception:
             logger.exception("failed to store inbound message")
@@ -76,28 +76,28 @@ class LocalSmtpServer:
 
     def __init__(self, mailbox: MailboxService, config: Config) -> None:
         """Prepare the controller (not yet started)."""
-        self._config = config
-        self._handler = MailboxHandler(mailbox, config)
-        self._controller: Controller | None = None
+        self.config = config
+        self.handler = MailboxHandler(mailbox, config)
+        self.controller: Controller | None = None
 
     @property
     def running(self) -> bool:
         """Return True if the controller has been started."""
-        return self._controller is not None
+        return self.controller is not None
 
     def start(self) -> None:
         """Start the SMTP server (binds the socket and spawns the loop thread)."""
-        if self._controller is not None:
+        if self.controller is not None:
             return
-        self._controller = Controller(
-            self._handler,
-            hostname=self._config.smtp_host,
-            port=self._config.smtp_port,
+        self.controller = Controller(
+            self.handler,
+            hostname=self.config.smtp_host,
+            port=self.config.smtp_port,
         )
-        self._controller.start()
+        self.controller.start()
 
     def stop(self) -> None:
         """Stop the controller and free the socket."""
-        if self._controller is not None:
-            self._controller.stop()
-            self._controller = None
+        if self.controller is not None:
+            self.controller.stop()
+            self.controller = None

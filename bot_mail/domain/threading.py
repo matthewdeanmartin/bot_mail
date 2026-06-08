@@ -56,7 +56,7 @@ def resolve_conversation(
     Returns:
         The existing or newly created :class:`Conversation`.
     """
-    parent = _find_parent(headers, messages)
+    parent = find_parent(headers, messages)
     if parent is not None:
         return conversations.get(parent.conversation_id)  # type: ignore[return-value]
 
@@ -65,7 +65,7 @@ def resolve_conversation(
     return conversation
 
 
-def _find_parent(headers: InboundHeaders, messages: MessageRepository) -> Message | None:
+def find_parent(headers: InboundHeaders, messages: MessageRepository) -> Message | None:
     """Return the parent message of an inbound message, if one is known."""
     if headers.in_reply_to:
         parent = messages.find_by_header(headers.in_reply_to)

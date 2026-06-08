@@ -44,10 +44,10 @@ def build_context(
         role = "assistant" if msg.role == Role.ASSISTANT else "user"
         context.append(ChatMessage(role=role, content=msg.body_text))
 
-    return _enforce_char_budget(context, config.max_context_chars)
+    return enforce_char_budget(context, config.max_context_chars)
 
 
-def _enforce_char_budget(context: list[ChatMessage], max_chars: int) -> list[ChatMessage]:
+def enforce_char_budget(context: list[ChatMessage], max_chars: int) -> list[ChatMessage]:
     """Drop oldest non-system turns until under the character budget.
 
     The leading system message(s) are always preserved.

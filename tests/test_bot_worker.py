@@ -38,7 +38,7 @@ def test_no_reply_when_latest_is_assistant(mailbox: MailboxService, config: Conf
     assert worker.tick() == 0
 
 
-class _FailingBackend:
+class FailingBackend:
     name = "boom"
 
     def generate(self, messages, *, model, options=None):  # type: ignore[no-untyped-def]
@@ -47,7 +47,7 @@ class _FailingBackend:
 
 def test_failed_generation_marks_job_and_message(mailbox: MailboxService, config: Config) -> None:
     user = mailbox.post_user_message("ping", subject="Topic")
-    worker = BotWorker(mailbox, _FailingBackend(), config)
+    worker = BotWorker(mailbox, FailingBackend(), config)
     assert worker.tick() == 0
 
     # The triggering message is marked failed and no assistant reply was stored.

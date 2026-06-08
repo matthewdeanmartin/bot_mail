@@ -22,7 +22,7 @@ from bot_mail.domain.models import Conversation, Message, Role
 from bot_mail.mail.composer import build_references, reply_subject
 from bot_mail.mail.local_client import send_local
 
-_REFRESH_MS = 1000
+REFRESH_MS = 1000
 
 
 class MailChatUI:
@@ -30,22 +30,22 @@ class MailChatUI:
 
     def __init__(self, app: App) -> None:
         """Build the widget tree and bind events."""
-        self._app = app
-        self._mailbox = app.mailbox
-        self._selected_conversation_id: int | None = None
-        self._conv_index: dict[str, int] = {}
-        self._last_thread_len = -1
+        self.app = app
+        self.mailbox = app.mailbox
+        self.selected_conversation_id: int | None = None
+        self.conv_index: dict[str, int] = {}
+        self.last_thread_len = -1
 
         self.root = tk.Tk()
         self.root.title("Slowmail — local email-backed chat")
         self.root.geometry("900x600")
-        self._build_widgets()
-        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
-        self._schedule_refresh()
+        self.build_widgets()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.schedule_refresh()
 
     # -- layout ------------------------------------------------------------
 
-    def _build_widgets(self) -> None:
+    def build_widgets(self) -> None:
         """Construct panes, lists, the thread view, compose box, and status bar."""
         paned = ttk.Panedwindow(self.root, orient=tk.HORIZONTAL)
         paned.pack(fill=tk.BOTH, expand=True)
@@ -54,10 +54,10 @@ class MailChatUI:
         left = ttk.Frame(paned, width=240)
         paned.add(left, weight=1)
 
-        ttk.Button(left, text="New conversation", command=self._new_conversation).pack(fill=tk.X, padx=4, pady=4)
+        ttk.Button(left, text="New conversation", command=self.new_conversation).pack(fill=tk.X, padx=4, pady=4)
         self.conv_list = tk.Listbox(left, exportselection=False)
         self.conv_list.pack(fill=tk.BOTH, expand=True, padx=4, pady=(0, 4))
-        self.conv_list.bind("<<ListboxSelect>>", self._on_select_conversation)
+        self.conv_list.bind("<<ListboxSelect>>", self.on_select_conversation)
 
         # Right: thread view + compose box.
         right = ttk.Frame(paned)
@@ -73,8 +73,8 @@ class MailChatUI:
         compose.pack(fill=tk.X, padx=4, pady=(0, 4))
         self.compose_text = tk.Text(compose, height=4, wrap=tk.WORD)
         self.compose_text.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        self.compose_text.bind("<Control-Return>", self._on_send_event)
-        ttk.Button(compose, text="Send", command=self._send).pack(side=tk.RIGHT, fill=tk.Y, padx=(4, 0))
+        self.compose_text.bind("<Control-Return>", self.on_send_event)
+        ttk.Button(compose, text="Send", command=self.send).pack(side=tk.RIGHT, fill=tk.Y, padx=(4, 0))
 
         # Status bar.
         self.status_var = tk.StringVar(value="starting…")
@@ -83,33 +83,33 @@ class MailChatUI:
 
     # -- actions -----------------------------------------------------------
 
-    def _new_conversation(self) -> None:
+    def new_conversation(self) -> None:
         """Deselect any conversation so the next send starts a fresh thread."""
         self.conv_list.selection_clear(0, tk.END)
-        self._selected_conversation_id = None
-        self._render_thread([])
+        self.selected_conversation_id = None
+        self.render_thread([])
         self.compose_text.focus_set()
 
-    def _on_send_event(self, _event: tk.Event) -> str:
+    def on_send_event(self, _event: tk.Event) -> str:
         """Handle Ctrl+Enter in the compose box."""
-        self._send()
+        self.send()
         return "break"
 
-    def _send(self) -> None:
+    def send(self) -> None:
         """Send the composed text as a user message via the local SMTP server."""
         body = self.compose_text.get("1.0", tk.END).strip()
         if not body:
             return
         try:
-            if self._selected_conversation_id is None:
-                subject = self._derive_subject(body)
-                send_local(self._app.config, body, subject=subject)
+            if self.selected_conversation_id is None:
+                subject = self.derive_subject(body)
+                send_local(self.app.config, body, subject=subject)
             else:
                 # Reply within the selected conversation: thread off its latest message.
-                parent = self._mailbox.messages.latest_in_conversation(self._selected_conversation_id)
-                conv = self._mailbox.conversations.get(self._selected_conversation_id)
+                parent = self.mailbox.messages.latest_in_conversation(self.selected_conversation_id)
+                conv = self.mailbox.conversations.get(self.selected_conversation_id)
                 send_local(
-                    self._app.config,
+                    self.app.config,
                     body,
                     subject=reply_subject(conv.subject if conv else "Re:"),
                     in_reply_to=parent.message_id_header if parent else None,
@@ -120,56 +120,56 @@ class MailChatUI:
             return
         self.compose_text.delete("1.0", tk.END)
         # Refresh soon so the just-sent message appears promptly.
-        self.root.after(200, self._refresh)
+        self.root.after(200, self.refresh)
 
     @staticmethod
-    def _derive_subject(body: str) -> str:
+    def derive_subject(body: str) -> str:
         """Use the first line (truncated) of a new message as its subject."""
         first = body.strip().splitlines()[0] if body.strip() else "New conversation"
         return first[:60] if first else "New conversation"
 
     # -- selection & rendering --------------------------------------------
 
-    def _on_select_conversation(self, _event: tk.Event) -> None:
+    def on_select_conversation(self, _event: tk.Event) -> None:
         """Track the selected conversation and render its thread."""
         selection = self.conv_list.curselection()  # type: ignore[no-untyped-call]
         if not selection:
             return
         label = self.conv_list.get(selection[0])
-        self._selected_conversation_id = self._conv_index.get(label)
-        self._last_thread_len = -1  # force re-render
-        self._refresh()
+        self.selected_conversation_id = self.conv_index.get(label)
+        self.last_thread_len = -1  # force re-render
+        self.refresh()
 
-    def _refresh_conversations(self) -> list[Conversation]:
+    def refresh_conversations(self) -> list[Conversation]:
         """Repopulate the conversation list, preserving selection."""
-        conversations = self._mailbox.list_conversations()
-        labels = [self._conv_label(c) for c in conversations]
+        conversations = self.mailbox.list_conversations()
+        labels = [self.conv_label(c) for c in conversations]
         current = list(self.conv_list.get(0, tk.END))
         if labels != current:
             self.conv_list.delete(0, tk.END)
-            self._conv_index.clear()
+            self.conv_index.clear()
             for conv, label in zip(conversations, labels, strict=True):
                 self.conv_list.insert(tk.END, label)
-                self._conv_index[label] = conv.id  # type: ignore[assignment]
+                self.conv_index[label] = conv.id  # type: ignore[assignment]
             # Restore highlight on the selected conversation.
-            if self._selected_conversation_id is not None:
+            if self.selected_conversation_id is not None:
                 for idx, conv in enumerate(conversations):
-                    if conv.id == self._selected_conversation_id:
+                    if conv.id == self.selected_conversation_id:
                         self.conv_list.selection_set(idx)
                         break
         return conversations
 
     @staticmethod
-    def _conv_label(conversation: Conversation) -> str:
+    def conv_label(conversation: Conversation) -> str:
         """Format a conversation list entry."""
         return f"{conversation.subject}  ·  #{conversation.id}"
 
-    def _render_thread(self, messages: list[Message]) -> None:
+    def render_thread(self, messages: list[Message]) -> None:
         """Render a conversation thread into the read-only text view."""
         self.thread_view.configure(state=tk.NORMAL)
         self.thread_view.delete("1.0", tk.END)
         for msg in messages:
-            who = "You" if msg.role == Role.USER else self._app.config.bot_address
+            who = "You" if msg.role == Role.USER else self.app.config.bot_address
             tag = "user" if msg.role == Role.USER else "assistant"
             self.thread_view.insert(tk.END, f"{who}  ", tag)
             self.thread_view.insert(tk.END, f"({msg.status.value})\n", "meta")
@@ -179,41 +179,41 @@ class MailChatUI:
 
     # -- periodic refresh --------------------------------------------------
 
-    def _schedule_refresh(self) -> None:
+    def schedule_refresh(self) -> None:
         """Arrange the next periodic refresh."""
-        self.root.after(_REFRESH_MS, self._refresh_tick)
+        self.root.after(REFRESH_MS, self.refresh_tick)
 
-    def _refresh_tick(self) -> None:
+    def refresh_tick(self) -> None:
         """Periodic refresh callback; reschedules itself."""
-        self._refresh()
-        self._schedule_refresh()
+        self.refresh()
+        self.schedule_refresh()
 
-    def _refresh(self) -> None:
+    def refresh(self) -> None:
         """Refresh conversation list, thread view, and status bar."""
-        self._refresh_conversations()
-        if self._selected_conversation_id is not None:
-            thread = self._mailbox.thread(self._selected_conversation_id)
-            if len(thread) != self._last_thread_len:
-                self._render_thread(thread)
-                self._last_thread_len = len(thread)
-        self._update_status()
+        self.refresh_conversations()
+        if self.selected_conversation_id is not None:
+            thread = self.mailbox.thread(self.selected_conversation_id)
+            if len(thread) != self.last_thread_len:
+                self.render_thread(thread)
+                self.last_thread_len = len(thread)
+        self.update_status()
 
-    def _update_status(self) -> None:
+    def update_status(self) -> None:
         """Update the status bar text."""
-        smtp_state = "up" if self._app.smtp.running else "down"
-        pending = self._mailbox.jobs.count_active()
+        smtp_state = "up" if self.app.smtp.running else "down"
+        pending = self.mailbox.jobs.count_active()
         self.status_var.set(
-            f"SMTP {self._app.config.smtp_host}:{self._app.config.smtp_port} [{smtp_state}]  ·  "
-            f"backend: {self._app.backend.name}  ·  model: {self._app.config.ollama_model}  ·  "
+            f"SMTP {self.app.config.smtp_host}:{self.app.config.smtp_port} [{smtp_state}]  ·  "
+            f"backend: {self.app.backend.name}  ·  model: {self.app.config.ollama_model}  ·  "
             f"pending jobs: {pending}"
         )
 
     # -- lifecycle ---------------------------------------------------------
 
-    def _on_close(self) -> None:
+    def on_close(self) -> None:
         """Stop background services and close the window."""
         try:
-            self._app.stop()
+            self.app.stop()
         finally:
             self.root.destroy()
 

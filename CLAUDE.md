@@ -1,0 +1,1 @@
+**No Private Underscores:** Do not use leading underscores (`_`) to denote "private" or "internal" visibility for classes, methods, functions, or attributes

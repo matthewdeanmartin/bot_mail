@@ -19,7 +19,7 @@ from bot_mail.mail.smtp_server import LocalSmtpServer
 from bot_mail.storage.db import Database
 
 
-def _free_port() -> int:
+def free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return int(s.getsockname()[1])
@@ -27,7 +27,7 @@ def _free_port() -> int:
 
 @pytest.mark.integration
 def test_smtp_send_then_bot_reply() -> None:
-    config = Config(db_path=":memory:", smtp_port=_free_port(), bot_poll_seconds=0.1)
+    config = Config(db_path=":memory:", smtp_port=free_port(), bot_poll_seconds=0.1)
     db = Database(":memory:")
     mailbox = MailboxService(db, config)
     server = LocalSmtpServer(mailbox, config)
@@ -60,7 +60,7 @@ def test_smtp_send_then_bot_reply() -> None:
 def test_smtp_rejects_unknown_recipient() -> None:
     import smtplib
 
-    config = Config(db_path=":memory:", smtp_port=_free_port())
+    config = Config(db_path=":memory:", smtp_port=free_port())
     db = Database(":memory:")
     mailbox = MailboxService(db, config)
     server = LocalSmtpServer(mailbox, config)
