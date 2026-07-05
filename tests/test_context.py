@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from bot_mail.config import Config
 from bot_mail.domain.context import build_context
 from bot_mail.domain.models import Message, MessageStatus, Role
@@ -21,7 +23,7 @@ def msg(role: Role, text: str) -> Message:
 
 
 def test_includes_system_prompt_first() -> None:
-    cfg = Config(db_path=":memory:")
+    cfg = Config(db_path=Path(":memory:"))
     ctx = build_context(cfg, [msg(Role.USER, "hello")])
     assert ctx[0].role == "system"
     assert ctx[0].content == cfg.system_prompt
@@ -29,14 +31,14 @@ def test_includes_system_prompt_first() -> None:
 
 
 def test_summary_inserted_after_system() -> None:
-    cfg = Config(db_path=":memory:")
+    cfg = Config(db_path=Path(":memory:"))
     ctx = build_context(cfg, [msg(Role.USER, "hi")], summary="earlier stuff")
     assert ctx[0].role == "system"
     assert "earlier stuff" in ctx[1].content
 
 
 def test_limits_recent_turns() -> None:
-    cfg = Config(db_path=":memory:", max_recent_turns=4)
+    cfg = Config(db_path=Path(":memory:"), max_recent_turns=4)
     msgs = [msg(Role.USER if i % 2 == 0 else Role.ASSISTANT, f"m{i}") for i in range(10)]
     ctx = build_context(cfg, msgs)
     turns = [c for c in ctx if c.role in ("user", "assistant")]
@@ -45,7 +47,7 @@ def test_limits_recent_turns() -> None:
 
 
 def test_ignores_internal_and_system_messages() -> None:
-    cfg = Config(db_path=":memory:")
+    cfg = Config(db_path=Path(":memory:"))
     msgs = [msg(Role.INTERNAL, "secret"), msg(Role.USER, "real")]
     ctx = build_context(cfg, msgs)
     contents = [c.content for c in ctx]
@@ -54,7 +56,7 @@ def test_ignores_internal_and_system_messages() -> None:
 
 
 def test_char_budget_drops_oldest_turns() -> None:
-    cfg = Config(db_path=":memory:", max_recent_turns=100, max_context_chars=50)
+    cfg = Config(db_path=Path(":memory:"), max_recent_turns=100, max_context_chars=50)
     msgs = [msg(Role.USER, "x" * 40) for _ in range(5)]
     ctx = build_context(cfg, msgs)
     # System prompt is preserved; turns trimmed to fit the budget.

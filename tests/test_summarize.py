@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from bot_mail.bot.worker import BotWorker
 from bot_mail.config import Config
 from bot_mail.domain.summarize import should_summarize, summarize_conversation
@@ -10,7 +12,7 @@ from bot_mail.mail.mailbox_service import MailboxService
 
 
 def test_should_summarize_threshold() -> None:
-    cfg = Config(db_path=":memory:", summarize_after_messages=20)
+    cfg = Config(db_path=Path(":memory:"), summarize_after_messages=20)
     assert should_summarize(cfg, message_count=19, has_summary=False) is False
     assert should_summarize(cfg, message_count=20, has_summary=False) is True
     # With an existing summary, only re-summarize on the next full window.
@@ -27,7 +29,7 @@ def test_summarize_conversation_uses_backend(mailbox: MailboxService, config: Co
 
 def test_worker_summarizes_long_thread(mailbox: MailboxService) -> None:
     # Small threshold so we trigger summarization quickly.
-    config = Config(db_path=":memory:", summarize_after_messages=4)
+    config = Config(db_path=Path(":memory:"), summarize_after_messages=4)
     worker = BotWorker(mailbox, FakeBackend(), config)
 
     user = mailbox.post_user_message("turn 1", subject="Long")

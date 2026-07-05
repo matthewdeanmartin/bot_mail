@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import httpx
 import pytest
 
@@ -14,18 +16,18 @@ from bot_mail.llm.ollama import OllamaBackend
 
 
 def test_factory_fake() -> None:
-    backend = make_backend(Config(db_path=":memory:", backend_name="fake"))
+    backend = make_backend(Config(db_path=Path(":memory:"), backend_name="fake"))
     assert backend.name == "fake"
 
 
 def test_factory_ollama() -> None:
-    backend = make_backend(Config(db_path=":memory:", backend_name="ollama"))
+    backend = make_backend(Config(db_path=Path(":memory:"), backend_name="ollama"))
     assert backend.name == "ollama"
 
 
 def test_factory_unknown() -> None:
     with pytest.raises(ValueError):
-        make_backend(Config(db_path=":memory:", backend_name="nope"))
+        make_backend(Config(db_path=Path(":memory:"), backend_name="nope"))
 
 
 def test_fake_reverse() -> None:

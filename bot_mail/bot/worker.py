@@ -60,7 +60,7 @@ class BotWorker:
         while not self.stop_event.is_set():
             try:
                 self.tick()
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught  # polling loop must survive any tick failure
                 logger.exception("bot worker tick failed")
             self.stop_event.wait(self.config.bot_poll_seconds)
 
@@ -121,7 +121,7 @@ class BotWorker:
 
         try:
             reply_text = self.backend.generate(context, model=self.config.ollama_model)
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-exception-caught  # record backend failure, don't crash
             logger.exception("generation failed for conversation %s", conversation_id)
             job.status = JobStatus.FAILED
             job.error = str(exc)
@@ -153,7 +153,7 @@ class BotWorker:
             return
         try:
             summary = summarize_conversation(self.config, self.backend, full)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught  # summarization is best-effort, must not crash
             logger.exception("summarization failed for conversation %s", conversation_id)
             return
         self.mailbox.conversations.update_summary(conversation_id, summary)

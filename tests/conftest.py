@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from bot_mail.config import Config
@@ -12,7 +14,7 @@ from bot_mail.storage.db import Database
 @pytest.fixture
 def config() -> Config:
     """An in-memory config suitable for fast unit tests."""
-    return Config(db_path=":memory:", backend_name="fake", bot_poll_seconds=0.05)
+    return Config(db_path=Path(":memory:"), backend_name="fake", bot_poll_seconds=0.05)
 
 
 @pytest.fixture

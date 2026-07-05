@@ -41,7 +41,7 @@ def test_no_reply_when_latest_is_assistant(mailbox: MailboxService, config: Conf
 class FailingBackend:
     name = "boom"
 
-    def generate(self, messages, *, model, options=None):  # type: ignore[no-untyped-def]
+    def generate(self, messages, *, model, options=None):
         raise BackendError("kaboom")
 
 

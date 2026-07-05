@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import socket
 import time
+from pathlib import Path
 
 import pytest
 
@@ -27,7 +28,7 @@ def free_port() -> int:
 
 @pytest.mark.integration
 def test_smtp_send_then_bot_reply() -> None:
-    config = Config(db_path=":memory:", smtp_port=free_port(), bot_poll_seconds=0.1)
+    config = Config(db_path=Path(":memory:"), smtp_port=free_port(), bot_poll_seconds=0.1)
     db = Database(":memory:")
     mailbox = MailboxService(db, config)
     server = LocalSmtpServer(mailbox, config)
@@ -41,12 +42,15 @@ def test_smtp_send_then_bot_reply() -> None:
         deadline = time.time() + 10
         while time.time() < deadline:
             convs = mailbox.list_conversations()
-            if convs and any(m.role.value == "assistant" for m in mailbox.thread(convs[0].id)):
+            if convs and convs[0].id is not None and any(
+                m.role.value == "assistant" for m in mailbox.thread(convs[0].id)
+            ):
                 break
             time.sleep(0.1)
 
         convs = mailbox.list_conversations()
         assert convs, "no conversation created"
+        assert convs[0].id is not None
         thread = mailbox.thread(convs[0].id)
         assert thread[0].body_text == "hello over smtp"
         assert any(m.role.value == "assistant" for m in thread)
@@ -60,7 +64,7 @@ def test_smtp_send_then_bot_reply() -> None:
 def test_smtp_rejects_unknown_recipient() -> None:
     import smtplib
 
-    config = Config(db_path=":memory:", smtp_port=free_port())
+    config = Config(db_path=Path(":memory:"), smtp_port=free_port())
     db = Database(":memory:")
     mailbox = MailboxService(db, config)
     server = LocalSmtpServer(mailbox, config)

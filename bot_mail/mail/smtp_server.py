@@ -65,7 +65,7 @@ class MailboxHandler:
         try:
             message = self.mailbox.ingest_raw(raw)
             logger.info("stored message %s in conversation %s", message.id, message.conversation_id)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught  # must not crash the SMTP handler
             logger.exception("failed to store inbound message")
             return "451 local storage error"
         return "250 Message accepted for local delivery"
