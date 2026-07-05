@@ -96,7 +96,7 @@ dev = [
     "crosshair-tool>=0.0.80; python_version >= '3.10'",
     "deptry>=0.20.0",
     "import-linter>=2.0",
-    "keepachangelog-manager-fork[all]>=6.5.0",
+    "keepachangelog-manager-fork[all]>=6.6.0",
 ]
 
 [tool.uv]
