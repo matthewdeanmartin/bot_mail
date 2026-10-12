@@ -57,7 +57,7 @@ class Config:
     ollama_timeout: float = 300.0
 
     system_prompt: str = (
-        "You are a helpful assistant replying by email. " "Be concise and answer the user's latest message directly."
+        "You are a helpful assistant replying by email. Be concise and answer the user's latest message directly."
     )
 
     max_recent_turns: int = 8

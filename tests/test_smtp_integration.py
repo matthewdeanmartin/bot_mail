@@ -42,8 +42,10 @@ def test_smtp_send_then_bot_reply() -> None:
         deadline = time.time() + 10
         while time.time() < deadline:
             convs = mailbox.list_conversations()
-            if convs and convs[0].id is not None and any(
-                m.role.value == "assistant" for m in mailbox.thread(convs[0].id)
+            if (
+                convs
+                and convs[0].id is not None
+                and any(m.role.value == "assistant" for m in mailbox.thread(convs[0].id))
             ):
                 break
             time.sleep(0.1)

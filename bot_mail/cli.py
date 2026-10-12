@@ -99,8 +99,7 @@ def serve(config: Config) -> int:
     app = App(config)
     app.start()
     print(
-        f"bot_mail serving SMTP on {config.smtp_host}:{config.smtp_port} "
-        f"(backend={app.backend.name}). Ctrl+C to stop."
+        f"bot_mail serving SMTP on {config.smtp_host}:{config.smtp_port} (backend={app.backend.name}). Ctrl+C to stop."
     )
     try:
         while True:
