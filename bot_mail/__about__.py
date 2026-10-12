@@ -22,4 +22,4 @@ __keywords__ = ["bot_mail"]
 __license__ = "MIT"
 __requires_python__ = ">=3.13"
 __status__ = "3 - Alpha"
-__dependencies__ = ["aiosmtpd>=1.4.6", "httpx>=0.28.1"]
+__dependencies__ = ["aiosmtpd>=1.4.6", "httpx2>=2.0,<3"]

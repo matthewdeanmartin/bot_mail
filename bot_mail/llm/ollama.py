@@ -7,7 +7,7 @@ progress.
 
 from __future__ import annotations
 
-import httpx
+import httpx2
 
 from bot_mail.domain.models import ChatMessage
 from bot_mail.llm.base import BackendError
@@ -58,14 +58,14 @@ class OllamaBackend:
             payload["options"] = options
 
         try:
-            resp = httpx.post(
+            resp = httpx2.post(
                 f"{self.host}/api/chat",
                 json=payload,
                 timeout=self.timeout,
             )
             resp.raise_for_status()
             data = resp.json()
-        except httpx.HTTPError as exc:
+        except httpx2.HTTPError as exc:
             raise BackendError(f"ollama request failed: {exc}") from exc
 
         try:

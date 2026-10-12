@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
 
 from bot_mail.config import Config
@@ -41,31 +41,31 @@ def test_fake_requires_user_message() -> None:
 
 
 def test_ollama_parses_message(monkeypatch: pytest.MonkeyPatch) -> None:
-    def fake_post(url: str, json: dict, timeout: float) -> httpx.Response:  # type: ignore[type-arg]
+    def fake_post(url: str, json: dict, timeout: float) -> httpx2.Response:  # type: ignore[type-arg]
         assert url.endswith("/api/chat")
         assert json["stream"] is False
-        request = httpx.Request("POST", url)
-        return httpx.Response(200, json={"message": {"content": "hi there"}}, request=request)
+        request = httpx2.Request("POST", url)
+        return httpx2.Response(200, json={"message": {"content": "hi there"}}, request=request)
 
-    monkeypatch.setattr(httpx, "post", fake_post)
+    monkeypatch.setattr(httpx2, "post", fake_post)
     out = OllamaBackend().generate([ChatMessage(role="user", content="hi")], model="gemma3")
     assert out == "hi there"
 
 
 def test_ollama_http_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    def fake_post(url: str, json: dict, timeout: float) -> httpx.Response:  # type: ignore[type-arg]
-        raise httpx.ConnectError("refused")
+    def fake_post(url: str, json: dict, timeout: float) -> httpx2.Response:  # type: ignore[type-arg]
+        raise httpx2.ConnectError("refused")
 
-    monkeypatch.setattr(httpx, "post", fake_post)
+    monkeypatch.setattr(httpx2, "post", fake_post)
     with pytest.raises(BackendError):
         OllamaBackend().generate([ChatMessage(role="user", content="hi")], model="gemma3")
 
 
 def test_ollama_bad_shape(monkeypatch: pytest.MonkeyPatch) -> None:
-    def fake_post(url: str, json: dict, timeout: float) -> httpx.Response:  # type: ignore[type-arg]
-        request = httpx.Request("POST", url)
-        return httpx.Response(200, json={"unexpected": True}, request=request)
+    def fake_post(url: str, json: dict, timeout: float) -> httpx2.Response:  # type: ignore[type-arg]
+        request = httpx2.Request("POST", url)
+        return httpx2.Response(200, json={"unexpected": True}, request=request)
 
-    monkeypatch.setattr(httpx, "post", fake_post)
+    monkeypatch.setattr(httpx2, "post", fake_post)
     with pytest.raises(BackendError):
         OllamaBackend().generate([ChatMessage(role="user", content="hi")], model="gemma3")
